@@ -137,3 +137,70 @@ for epoch in range(EPOCHS):
 
     val_losses.append(val_loss / len(val_loader))
     val_accs.append(100. * val_correct / val_total)
+
+    # 保存验证准确率最高的模型 + 早停
+    if val_accs[-1] > best_val_acc:
+        best_val_acc = val_accs[-1]
+        torch.save(model.state_dict(), 'best_model2.pth')
+        patience_counter = 0  # 提升了，重置计数器
+        print(f' 保存最优模型: {best_val_acc:.2f}%')
+    else:
+        patience_counter += 1  # 没提升，计数器 +1
+        if patience_counter >= EARLY_STOP_PATIENCE:
+            print(f' 早停：连续 {EARLY_STOP_PATIENCE} 个 epoch 验证准确率没提升')
+            break
+
+    # 这个 epoch 结束，学习率往前走一步，StepLR ：每 7 个 epoch，学习率 × 0.1
+    scheduler.step()
+
+    print(f'Epoch [{epoch + 1:2d}/{EPOCHS}] '
+          f'Train Loss: {train_losses[-1]:.4f} | Train Acc: {train_accs[-1]:.2f}% | '
+          f'Val Loss: {val_losses[-1]:.4f} | Val Acc: {val_accs[-1]:.2f}%')
+
+# 6.训练完成后，加载最优模型，用测试集评测一次
+model.load_state_dict(torch.load('best_model2.pth'))  # 加载训练过程中保存的最优权重
+model.eval()
+test_loss, test_correct, test_total = 0.0, 0, 0
+with torch.no_grad():
+    for images, labels in test_loader:
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        test_loss += loss.item()
+        _, predicted = outputs.max(1)
+        test_total += labels.size(0)
+        test_correct += predicted.eq(labels).sum().item()
+
+test_acc = 100. * test_correct / test_total
+print(f'\n最终测试准确率: {test_acc:.2f}% ')
+
+#  画图
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+ax1.plot(train_losses, 'o-', label='Train Loss')
+ax1.plot(val_losses, 's-', label='Val Loss')
+ax1.set_xlabel('Epoch')
+ax1.set_ylabel('Loss')
+ax1.set_title('Loss ')
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+ax2.plot(train_accs, 'o-', label='Train Acc')
+ax2.plot(val_accs, 's-', label='Val Acc')
+ax2.set_xlabel('Epoch')
+ax2.set_ylabel('Accuracy (%)')
+ax2.set_title('Accuracy')
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+ax2.axhline(y=70, color='r', linestyle='--', label='Reached 70% target!')
+
+plt.tight_layout()
+plt.savefig(r'D:\Pythoncode\PythonProject1\01_cifar10_cnn\training_curves2.png', dpi=150)
+plt.show()
+
+print(f'\n最终测试准确率: {test_acc:.2f}%')
+if test_acc >= 70:
+    print(' 达到目标！')
+else:
+    print(f' 差 {70 - test_acc:.2f}%，试试加 epoch 或调大模型')
