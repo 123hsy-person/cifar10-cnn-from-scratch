@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-# 1. 超参数（你调的 knobs）
+# 1. 超参数
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 EPOCHS = 10
