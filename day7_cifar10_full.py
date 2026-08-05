@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # 1.超参数+数据集路径
 BATCH_SIZE = 64
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 EPOCHS = 15
 DATA_ROOT = r'D:\Pythoncode\PythonProject1\datasets'
 
@@ -27,21 +27,32 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465),
                          (0.2470, 0.2435, 0.2616))
 ])
-#从训练集抽一部分做验证集
-full_train = datasets.CIFAR10(root=DATA_ROOT, train=True, download=True, transform=train_transform)
-test_dataset  = datasets.CIFAR10(root=DATA_ROOT, train=False, download=True, transform=test_transform)
-from torch.utils.data import random_split
-train_size = int(0.9 * len(full_train))
-val_size = len(full_train) - train_size
-train_dataset, val_dataset = random_split(full_train, [train_size, val_size])
-print(f'训练: {len(train_dataset)} | 验证: {len(val_dataset)} | 测试: {len(test_dataset)}')
+# 创建两个 Dataset，指向同一批图片
+# 训练集：带数据增强
+full_train_aug = datasets.CIFAR10(root=DATA_ROOT, train=True, download=True, transform=train_transform)
+# 验证集用：不带数据增强（重要！验证和测试不能用增强）
+full_train_eval = datasets.CIFAR10(root=DATA_ROOT, train=True, download=True, transform=test_transform)
+# 测试集: 不带数据增强
+test_dataset = datasets.CIFAR10(root=DATA_ROOT, train=False, download=True, transform=test_transform)
+
+# 用同一组索引切分，保证训练/验证互不重叠
+# 确定谁分到训练集、谁分到验证集
+from torch.utils.data import Subset
+indices = list(range(len(full_train_aug)))
+train_size = int(0.9 * len(indices))
+val_size = len(indices) - train_size
+# 用 Subset 切分
+train_dataset = Subset(full_train_aug, indices[:train_size])     # 带增强
+val_dataset   = Subset(full_train_eval, indices[train_size:])    # 不带增强
+
+print(f'训练集: {len(train_dataset)} | 验证集: {len(val_dataset)} | 测试集: {len(test_dataset)}')
 #dataloader：自动分批，打乱
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
 val_loader   = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 test_loader  = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
 
-# 3.定义模型，（多加了一层卷积层，以及 BatchNorm 和 Dropout）
+# 3.定义模型，（多加了一层卷积层，以及 BatchNorm批归一化和 Dropout正则化）
 class ImprovedCNN(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
@@ -65,8 +76,8 @@ class ImprovedCNN(nn.Module):
 
     def forward(self, x):
         x = self.pool(torch.relu(self.bn1(self.conv1(x))))  # 卷积->标准化->激活->池化,x=[batch,32,16,16]
-        x = self.pool(torch.relu(self.bn2(self.conv2(x))))  # [batch,64,8,8]
-        x = self.pool(torch.relu(self.bn3(self.conv3(x))))  # [batch,128,4,4]
+        x = self.pool(torch.relu(self.bn1(self.conv2(x))))  # [batch,64,8,8]
+        x = self.pool(torch.relu(self.bn1(self.conv3(x))))   # [batch,128,4,4]
         x = x.view(x.size(0), -1) #展平-> [batch,2048]
         x = self.dropout(torch.relu(self.fc1(x))) # Dropout 加在全连接层前面，训练时随机关 30% 神经元，防止过拟合。
         x = self.fc2(x)
@@ -141,7 +152,7 @@ for epoch in range(EPOCHS):
     # 保存验证准确率最高的模型 + 早停
     if val_accs[-1] > best_val_acc:
         best_val_acc = val_accs[-1]
-        torch.save(model.state_dict(), 'best_model2.pth')
+        torch.save(model.state_dict(), 'best_model6(去掉batchnorm).pth')
         patience_counter = 0  # 提升了，重置计数器
         print(f' 保存最优模型: {best_val_acc:.2f}%')
     else:
@@ -158,7 +169,7 @@ for epoch in range(EPOCHS):
           f'Val Loss: {val_losses[-1]:.4f} | Val Acc: {val_accs[-1]:.2f}%')
 
 # 6.训练完成后，加载最优模型，用测试集评测一次
-model.load_state_dict(torch.load('best_model2.pth'))  # 加载训练过程中保存的最优权重
+model.load_state_dict(torch.load('best_model6(去掉batchnorm).pth'))  # 加载训练过程中保存的最优权重
 model.eval()
 test_loss, test_correct, test_total = 0.0, 0, 0
 with torch.no_grad():
@@ -196,11 +207,11 @@ ax2.grid(True, alpha=0.3)
 ax2.axhline(y=70, color='r', linestyle='--', label='Reached 70% target!')
 
 plt.tight_layout()
-plt.savefig(r'D:\Pythoncode\PythonProject1\01_cifar10_cnn\training_curves2.png', dpi=150)
+plt.savefig(r'D:\Pythoncode\PythonProject1\01_cifar10_cnn\training_curves6(去掉batchnorm).png', dpi=150)
 plt.show()
 
-print(f'\n最终测试准确率: {test_acc:.2f}%')
+print(f'\nFinal test accuracy:{test_acc:.2f}%')
 if test_acc >= 70:
-    print(' 达到目标！')
+    print(' Achieve the goal')
 else:
-    print(f' 差 {70 - test_acc:.2f}%，试试加 epoch 或调大模型')
+    print(f' A {70 - test_acc:.2f}% difference,try adding epoch or increase the model size')
