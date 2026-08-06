@@ -169,7 +169,7 @@ for epoch in range(EPOCHS):
           f'Val Loss: {val_losses[-1]:.4f} | Val Acc: {val_accs[-1]:.2f}%')
 
 # 6.训练完成后，加载最优模型，用测试集评测一次
-model.load_state_dict(torch.load('best_model6(去掉batchnorm).pth'))  # 加载训练过程中保存的最优权重
+model.load_state_dict(torch.load('best_model7.pth'))  # 加载训练过程中保存的最优权重
 model.eval()
 test_loss, test_correct, test_total = 0.0, 0, 0
 with torch.no_grad():
