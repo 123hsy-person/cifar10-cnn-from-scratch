@@ -207,7 +207,7 @@ ax2.grid(True, alpha=0.3)
 ax2.axhline(y=70, color='r', linestyle='--', label='Reached 70% target!')
 
 plt.tight_layout()
-plt.savefig(r'D:\Pythoncode\PythonProject1\01_cifar10_cnn\training_curves6(去掉batchnorm).png', dpi=150)
+plt.savefig(r'D:\Pythoncode\PythonProject1\01_cifar10_cnn\training_curves7.png', dpi=150)
 plt.show()
 
 print(f'\nFinal test accuracy:{test_acc:.2f}%')
