@@ -149,6 +149,9 @@ for epoch in range(EPOCHS):
     val_losses.append(val_loss / len(val_loader))
     val_accs.append(100. * val_correct / val_total)
 
+    # 这个 epoch 结束，学习率往前走一步，StepLR ：每 7 个 epoch，学习率 × 0.1
+    scheduler.step()
+
     # 保存验证准确率最高的模型 + 早停
     if val_accs[-1] > best_val_acc:
         best_val_acc = val_accs[-1]
