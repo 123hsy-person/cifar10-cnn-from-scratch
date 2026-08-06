@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # 1.超参数+数据集路径
 BATCH_SIZE = 64
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.001
 EPOCHS = 15
 DATA_ROOT = r'D:\Pythoncode\PythonProject1\datasets'
 
