@@ -152,7 +152,7 @@ for epoch in range(EPOCHS):
     # 保存验证准确率最高的模型 + 早停
     if val_accs[-1] > best_val_acc:
         best_val_acc = val_accs[-1]
-        torch.save(model.state_dict(), 'best_model6(去掉batchnorm).pth')
+        torch.save(model.state_dict(), 'best_model7.pth')
         patience_counter = 0  # 提升了，重置计数器
         print(f' 保存最优模型: {best_val_acc:.2f}%')
     else:
