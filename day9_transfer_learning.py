@@ -49,7 +49,7 @@ train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, nu
 val_loader   = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 test_loader  = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
-# 3.加载预训练 ResNet-18
+# 3.加载预训练 ResNet-18和替换最后一层
 model = models.resnet18(weights='IMAGENET1K_V1')
 
 # 冻结所有卷积层参数（不让它们训练）
